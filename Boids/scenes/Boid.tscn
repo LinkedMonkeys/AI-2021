@@ -1,0 +1,159 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://assets/ballYellow_06.png" type="Texture" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+var screen_size
+
+var velocity
+var acceleration
+var max_force
+var max_speed
+
+var flock
+
+func _ready():
+	screen_size = get_viewport_rect().size
+	position = Vector2(rand_range(0, screen_size.x), rand_range(0, screen_size.y))
+	velocity = Vector2(rand_range(-4, 4), rand_range(-4, 4))
+	acceleration = Vector2(0, 0) #rand_range(-5, 5), rand_range(-5, 5))
+	max_force = 0.01
+	max_speed = 50
+
+# \"Constructor\" to initialize
+func setup(boids):
+	flock = boids
+
+func align():
+	var radius = 50
+	var average = Vector2(0, 0)
+	var count = 0
+	for boid in flock:
+		var dist = position.distance_to(boid.position)
+		if dist < radius && boid != self:
+			average += boid.velocity
+			count += 1
+	average /= count
+	
+	var steering = average - velocity
+	acceleration += steering
+	
+func cohesion():
+	var radius = 50
+	var average = Vector2(0, 0)
+	var count = 0
+	for boid in flock:
+		var dist = position.distance_to(boid.position)
+		if dist < radius && boid != self:
+			average += boid.position
+			count += 1
+	average /= count
+	
+	var steering = average - position
+	acceleration += steering
+	
+func _process(delta):
+	align()
+	cohesion()
+
+	velocity += delta* acceleration
+	velocity = velocity.clamped(max_speed)
+
+	position +=  delta * velocity
+
+	if position.x > screen_size.x:
+		position.x = 0
+	if position.x < 0:
+		position.x = screen_size.x
+	if position.y > screen_size.y:
+		position.y = 0
+	if position.y < 0:
+		position.y = screen_size.y
+		
+
+#func align():
+#	var radius = 50
+#
+#	var desired = Vector2(0, 0)
+#	var count = 0
+#	for boid in flock:
+#		var dist = position.distance_to(boid.position)
+#		if dist < radius && boid != self:
+#			desired += boid.velocity
+#			count += 1
+#
+#	if count > 0:
+#		desired = desired/count
+#		var steering = desired - velocity
+#		var steeringForce = steering.clamped(max_force)
+#
+#		acceleration += steeringForce
+#
+#func cohesion():
+#	var radius = 50
+#
+#	var desired = Vector2(0, 0)
+#	var count = 0
+#	for boid in flock:
+#		var dist = position.distance_to(boid.position)
+#		if dist < radius && boid != self:
+#			desired += boid.position
+#			count += 1
+#
+#	if count > 0:
+#		desired = desired/count
+#		var steering = desired - position
+#		var steeringForce = steering.clamped(max_force)
+#
+#		acceleration += steeringForce
+#func align():
+#	var perception_radius = 50
+#	var total = 0
+#
+#	var desired = Vector2(0, 0)
+#	for boid in flock:
+#		var d = position.distance_to(boid.position)
+##		print(d)
+#		if d < perception_radius && boid != self:
+#			desired += boid.velocity
+#			total += 1
+#
+#	if total > 0:
+#		desired /= total
+#
+#		var steering = desired - velocity
+#		steering = steering.clamped(max_force)
+#		acceleration += steering
+#		print(total, steering)
+
+#func cohesion():
+#	var perception_radius = 50
+#	var total = 0
+#
+#	var desired = Vector2(0, 0)
+#	for boid in flock:
+#		var d = position.distance_to(boid.position)
+##		print(d)
+#		if d < perception_radius && boid != self:
+#			desired += boid.position
+#			total += 1
+#
+#	if total > 0:
+#		desired /= total
+#		var steering = desired - position
+#		steering = steering.clamped(max_force)
+#		acceleration += steering
+##		print(total, steering)
+"
+
+[node name="Boid" type="Node2D"]
+script = SubResource( 1 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="."]
+scale = Vector2( 0.1, 0.1 )
+texture = ExtResource( 1 )
